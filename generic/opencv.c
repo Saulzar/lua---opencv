@@ -1223,6 +1223,9 @@ static int libopencv_(Main_cvWarpAffine) (lua_State *L) {
   THTensor * source = luaT_checkudata(L, 1, torch_Tensor);
   THTensor * dest   = luaT_checkudata(L, 2, torch_Tensor);
   THTensor * warp   = luaT_checkudata(L, 3, torch_Tensor);
+  
+  int quality = lua_tonumber(L, 4);
+  int fill = lua_toboolean(L, 5);
 
   THArgCheck(warp->size[0] == 2 , 1, "warp matrix: 2x3 Tensor expected");
   THArgCheck(warp->size[1] == 3 , 1, "warp matrix: 2x3 Tensor expected");
@@ -1230,8 +1233,8 @@ static int libopencv_(Main_cvWarpAffine) (lua_State *L) {
   // Generate IPL headers
 
   IplImage * source_ipl = libopencv_(Main_torchimg2opencv_8U)(source);
-  IplImage * dest_ipl = cvCreateImage(cvGetSize(source_ipl), IPL_DEPTH_8U,
-                                      source_ipl->nChannels);
+  IplImage * dest_ipl = libopencv_(Main_torchimg2opencv_8U)(dest);
+  
   CvMat* warp_mat = cvCreateMat(2,3,CV_32FC1);
 
   // Copy warp transformation matrix
@@ -1242,10 +1245,20 @@ static int libopencv_(Main_cvWarpAffine) (lua_State *L) {
                   ptr++;
                   );
   THTensor_(free)(tensor);
+  
+  int flags = (fill ? CV_WARP_FILL_OUTLIERS : 0);  
+  
+  switch(quality) {
+   case 0: flags |= CV_INTER_NN; break;
+   case 2: flags |= CV_INTER_CUBIC; break;
+   case 3: flags |= CV_INTER_AREA; break;    
+   default: flags |= CV_INTER_LINEAR; break;   
+  }
 
+  
   // Simple call to CV function
   cvWarpAffine(source_ipl, dest_ipl, warp_mat,
-               CV_INTER_LINEAR+CV_WARP_FILL_OUTLIERS,cvScalarAll(0));
+                flags, cvScalarAll(0));
 
   // Return results
   libopencv_(Main_opencv8U2torch)(dest_ipl, dest);
@@ -1506,8 +1519,11 @@ static int libopencv_(Display)(lua_State* L) {
   IplImage * image_cv = libopencv_(Main_torchimg2opencv_8U)(image);
   const char* win     = lua_tostring(L, 2);
 
+  cvStartWindowThread();
+  
   cvNamedWindow(win, CV_WINDOW_AUTOSIZE);
   cvShowImage(win, image_cv);
+
 
   cvReleaseImage(&image_cv);
   return 0;
@@ -1539,6 +1555,9 @@ static const luaL_reg libopencv_(Main__) [] =
   {"display",              libopencv_(Display)},
   {NULL, NULL}  /* sentinel */
 };
+
+
+
 
 DLL_EXPORT int libopencv_(Main_init) (lua_State *L) {
   luaT_pushmetatable(L, torch_Tensor);

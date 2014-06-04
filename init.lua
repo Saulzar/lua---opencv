@@ -176,7 +176,8 @@ function opencv.GetAffineTransform(...)
    )
    local warp = torch.Tensor()
    warp.libopencv.GetAffineTransform(points_src,points_dst,warp)
-   return warp
+   
+   return warp[1]
 end
 
 -- test function:
@@ -204,31 +205,48 @@ end
 
 -- WarpAffine
 function opencv.WarpAffine(...)
-   local _, source,warp = dok.unpack(
+   local _, source, dest, warp, quality, fill = dok.unpack(
       {...},
       'opencv.WarpAffine',
       [[Implements the affine transform which allows the user to warp,
             stretch, rotate and resize an image.]],
       {arg='source', type='torch.Tensor',
-       help='image in which to perform Histogram Equalization', req=true},
+       help='source image to warp', req=true},
+      {arg='dest', type='torch.Tensor',
+       help='destination to write the warped image', default=nil},
       {arg='warp', type='torch.Tensor',
-       help='2x3 transformation matrix', req=true}
+       help='2x3 transformation matrix', req=true},
+      {arg='quality', type='string',
+       help='quality of the warp (nn, linear, cubic, area)', default='linear'},
+      {arg='fill', type='boolean',
+       help='fill outliers in destination?', default=false}       
    )
-   local img = source
+   
+   local qualityTypes = {
+     nn = 0,
+     linear  = 1,
+     cubic   = 2,
+     area    = 3
+   }
+   
+   if(qualityTypes[quality] == nil) then
+     xerror(' *** ERROR: opencv.WarpAffine quality must be one of (nn, linear, cubic, area)')
+   end
+   
    if warp:size(1) ~= 2 or warp:size(2) ~= 3 then
       xerror(' *** ERROR: opencv.WarpAffine warp Tensor must be 2x3')
    end
-   local dest = torch.Tensor():resizeAs(img)
-   img.libopencv.WarpAffine(img,dest,warp)
+   
+  
+   local dest = dest or torch.Tensor():resizeAs(source)
+   source.libopencv.WarpAffine(source, dest, warp, qualityTypes[quality], fill)
+      
    return dest
 end
 
 -- test function:
-function opencv.WarpAffine_testme(img)
-   if not img then
-      img = image.lena()
-      image.display{image=img,legend='Original image'}
-   end
+function opencv.WarpAffine_testme(img, quality, fill)
+   img = img or image.lena()
 
    local src = torch.Tensor(3,2)
    local dst = torch.Tensor(3,2)
@@ -248,8 +266,8 @@ function opencv.WarpAffine_testme(img)
 
    local warp = opencv.GetAffineTransform(src,dst)
    print('warp',warp)
-   local warpImg = opencv.WarpAffine(img,warp)
-   image.display{image=warpImg,legend='Warped image'}
+   local warpImg = opencv.WarpAffine(img,warp, quality, fill)
+   opencv.display{image=warpImg,win='Warped image'}
 end
 
 
