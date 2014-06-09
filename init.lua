@@ -182,18 +182,35 @@ function opencv.WarpAffine_testme(img, quality, fill)
    local warp = opencv.GetAffineTransform(src,dst)
    print('warp',warp)
    local warpImg = opencv.WarpAffine(img, nil, warp, quality, fill)
+   
+   
    opencv.display{image=warpImg,win='Warped image'}
 end
 
 
+function swap(tensor, dim, i1, i2) 
+  local x1 = tensor:narrow(dim, i1, 1)
+  local x2 = tensor:narrow(dim, i2, 1)
+  
+  y = x1:clone()
+  x1:copy(x2)
+  x2:copy(y)
+  
+  return tensor
+end
+  
+  
 
 function opencv.display(...)
-   local image, win = dok.unpack({...}, 'opencv.display',
+   local _, img, win = dok.unpack({...}, 'opencv.display',
       'displays a single image, with optional parameters',
-      {arg='image', type='torch.Tensor',
+      {arg='image', type='torch.Tensor | table',
        help='image or table of images 3xHxW', req=true},
       {arg='win', type='string', help='window legend (and descriptor)', default=nil}
    )
    
-   image.libopencv.display(image, win)
+   local bgr = img:clone()
+   swap(bgr, 1, 1, 3)
+   
+   img.libopencv.display(bgr, win)
 end
