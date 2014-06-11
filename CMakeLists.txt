@@ -4,7 +4,7 @@ FIND_PACKAGE(Torch REQUIRED)
 FIND_PACKAGE(OpenCV REQUIRED)
 
 SET(src opencv.cpp)
-SET(luasrc init.lua)
+SET(luasrc init.lua lena.jpg)
 
 SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
 
