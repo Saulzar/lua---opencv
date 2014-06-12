@@ -9,6 +9,10 @@
 
 #include <opencv2/opencv.hpp>
 
+inline void libopencv_(push)(lua_State *L, THTensor *tensor) {
+  THTensor_(retain)(tensor);
+  luaT_pushudata(L, tensor, torch_Tensor);
+}
 
 
 inline THTensor *libopencv_(checkTensor)(lua_State* L, int arg) {
@@ -84,7 +88,7 @@ static int libopencv_(cvResize) (lua_State *L) {
       
     cv::resize(source, dest, dest.size());
 
-    luaT_pushudata(L, dest_tensor, torch_Tensor);
+    libopencv_(push)(L, dest_tensor);
     return 1;    
     
   } catch (std::exception const &e) {
@@ -92,6 +96,8 @@ static int libopencv_(cvResize) (lua_State *L) {
   }    
   
 }
+
+
 
 
 //============================================================
@@ -116,7 +122,7 @@ static int libopencv_(cvWarpAffine) (lua_State *L) {
     int flags = (fill ? CV_WARP_FILL_OUTLIERS : 0) | quality;  
     cv::warpAffine(source, dest, warp, cv::Size(), flags);
     
-    luaT_pushudata(L, dest_tensor, torch_Tensor);
+    libopencv_(push)(L, dest_tensor);
     return 1;    
     
   } catch (std::exception const &e) {
@@ -135,8 +141,9 @@ static int libopencv_(cvConvertColor) (lua_State *L) {
     
     cv::Mat source = libopencv_(ToMat)(source_tensor);
     cv::Mat dest;
+      
+    cv::cvtColor(source, dest, code);   
     
-    cv::cvtColor(source, dest, code);
     luaT_pushudata(L, libopencv_(ToTensor)(dest), torch_Tensor);
     return 1;    
     
@@ -157,7 +164,7 @@ static int libopencv_(clampC) (lua_State *L) {
 
     TH_TENSOR_APPLY(real, tensor, *tensor_data = clamp(*tensor_data, min, max); );
     
-    luaT_pushudata(L, tensor, torch_Tensor);
+    libopencv_(push)(L, tensor);
     return 1;    
     
   } catch (std::exception const &e) {
@@ -177,7 +184,7 @@ static int libopencv_(wrapC) (lua_State *L) {
     real r = lua_tonumber(L, 2);
     TH_TENSOR_APPLY(real, tensor, *tensor_data = wrap(*tensor_data, r); );
     
-    luaT_pushudata(L, tensor, torch_Tensor);
+    libopencv_(push)(L, tensor);
     return 1;       
     
   } catch (std::exception const &e) {
