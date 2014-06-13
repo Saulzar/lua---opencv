@@ -79,16 +79,18 @@ static int libopencv_(cvResize) (lua_State *L) {
   try {
     // Get Tensor's Info
     THTensor * source_tensor = libopencv_(checkTensor)(L, 1);
-    THTensor * dest_tensor = libopencv_(checkTensor)(L, 2);
     
-    int quality = lua_tonumber(L, 3);
+    int w = lua_tonumber(L, 2);
+    int h = lua_tonumber(L, 3);
+    
+    int quality = lua_tonumber(L, 4);
     
     cv::Mat source = libopencv_(ToMat)(source_tensor);
-    cv::Mat dest = libopencv_(ToMat)(dest_tensor);
+    cv::Mat dest;
       
-    cv::resize(source, dest, dest.size());
+    cv::resize(source, dest, cv::Size(w, h), 0, 0, quality);
 
-    libopencv_(push)(L, dest_tensor);
+    luaT_pushudata(L, libopencv_(ToTensor)(dest), torch_Tensor);
     return 1;    
     
   } catch (std::exception const &e) {
@@ -98,31 +100,32 @@ static int libopencv_(cvResize) (lua_State *L) {
 }
 
 
-
-
 //============================================================
 static int libopencv_(cvWarpAffine) (lua_State *L) {
 
   try {
     
     THTensor * source_tensor = libopencv_(checkTensor)(L, 1);
-    THTensor * dest_tensor   = libopencv_(checkTensor)(L, 2);
-    THDoubleTensor * warp_tensor   = (THDoubleTensor *)luaT_checkudata(L, 3, "torch.DoubleTensor");
+    THDoubleTensor * warp_tensor   = (THDoubleTensor *)luaT_checkudata(L, 2, "torch.DoubleTensor");
 
-    int quality = lua_tonumber(L, 4);
-    int fill = lua_toboolean(L, 5);
+    int w = lua_tonumber(L, 3);
+    int h = lua_tonumber(L, 4);
+    
+    int quality = lua_tonumber(L, 5);
+    int fill = lua_toboolean(L, 6);
 
-    cvAssert(warp_tensor->size[0] == 2 , "warp matrix: 2x3 Tensor expected");
-    cvAssert(warp_tensor->size[1] == 3 , "warp matrix: 2x3 Tensor expected");
+    cvAssert(warp_tensor->size[0] == 2 && warp_tensor->size[1] == 3, "warp matrix: 2x3 Tensor expected");
    
     cv::Mat warp = libopencv_DoubleToMat(warp_tensor);
     cv::Mat source = libopencv_(ToMat)(source_tensor);
-    cv::Mat dest = libopencv_(ToMat)(dest_tensor);
     
-    int flags = (fill ? CV_WARP_FILL_OUTLIERS : 0) | quality;  
-    cv::warpAffine(source, dest, warp, cv::Size(), flags);
+    cv::Mat dest;
+   
+    int flags = (fill ? CV_WARP_FILL_OUTLIERS : 0) | quality;   
+    cv::warpAffine(source, dest, warp, cv::Size(w, h), flags);
     
-    libopencv_(push)(L, dest_tensor);
+    
+    luaT_pushudata(L, libopencv_(ToTensor)(dest), torch_Tensor);
     return 1;    
     
   } catch (std::exception const &e) {
@@ -171,7 +174,6 @@ static int libopencv_(clampC) (lua_State *L) {
     luaL_error(L, e.what());
   }    
 }
-
 
 
 
