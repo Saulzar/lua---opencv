@@ -3,13 +3,13 @@ require 'torch'
 local affine = {}
 
 affine.eye = function()
-  return torch.eye(3)
+  return torch.eye(3):double()
 end
 
 affine.scaling = function(sx, sy) 
   sy = sy or sx
 
-  return torch.diag(torch.Tensor {sx, sy, 1})
+  return torch.diag(torch.DoubleTensor {sx, sy, 1})
 end
 
 
@@ -17,7 +17,7 @@ affine.rotation = function(a)
   local sa = torch.sin(a)
   local ca = torch.cos(a)
 
-  return torch.Tensor { 
+  return torch.DoubleTensor { 
     {ca, -sa, 0},
     {sa,  ca, 0},
     {0,   0,  1}
@@ -25,7 +25,7 @@ affine.rotation = function(a)
 end
 
 affine.translation = function(x, y)
-  return torch.Tensor { 
+  return torch.DoubleTensor { 
     {1,   0,  x},
     {0,   1,  y},
     {0,   0,  1}

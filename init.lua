@@ -31,20 +31,21 @@ end
 function opencv.resize(...)
   
    local flags = showFlags(libopencv.inter)
-   local _, image, quality, width, height, scale = dok.unpack(
+   local _, image, width, height, quality, scale = dok.unpack(
       {...},
       'opencv.resize',
       [[Resize an image.]],
       {arg='image', type='torch.*Tensor',
        help='image to resize', req=true},
   
-      {arg='quality', type='string',
-       help='quality of the resize ' ..flags, default='linear'},           
       {arg='width', type='number',
        help='width of resized image', default = 0},
       {arg='height', type='number',
        help='height of resized image', default = 0},
-       
+ 
+     {arg='quality', type='string',
+       help='quality of the resize ' ..flags, default='linear'},           
+        
       {arg='scale', type='number',
        help='use scale factor of input image', default=1}
    )
@@ -67,19 +68,20 @@ end
 function opencv.batchResize(...)
   
    local flags = showFlags(libopencv.inter)
-   local _, images, quality, width, height, scale = dok.unpack(
+   local _, images, width, height, quality, scale = dok.unpack(
       {...},
       'opencv.resize',
       [[Resize an image.]],
       {arg='images', type='torch.*Tensor',
        help='images to resize', req=true},
-      {arg='quality', type='string',
-       help='quality of the resize ' ..flags, default='linear'},   
+   
        
       {arg='width', type='number',       
        help='width of resized image', default=0},
       {arg='height', type='number',
        help='height of resized image', default=0},
+      {arg='quality', type='string',
+       help='quality of the resize ' ..flags, default='linear'},
       {arg='scale', type='number',
        help='height of resized image', default=1}
    )
@@ -161,7 +163,7 @@ function opencv.warpAffine(...)
    width = width or image:size(2)
    height = height or image:size(1)
    
-   return image.libopencv.warpAffine(image, warp:narrow(1, 1, 2):contiguous(), width, height, libopencv.inter[quality], fill)
+   return image.libopencv.warpAffine(image, warp:narrow(1, 1, 2):contiguous():double(), width, height, libopencv.inter[quality], fill)
 end
 
 function opencv.lena()
@@ -215,11 +217,25 @@ function opencv.load(...)
    local _, filename = dok.unpack({...}, 'opencv.load',
       'loads an image from disk',
       {arg='filename', type='string',
-       help='image or table of images 3xHxW', req=true}
+       help='image file to load', req=true}
    )
       
    return libopencv.load(filename)
 end
+
+
+function opencv.save(...)
+   local _, filename, image = dok.unpack({...}, 'opencv.save',
+      'save an image to disk',
+      {arg='filename', type='string',
+       help='filename of ', req=true},
+      {arg='image', type='ByteTensor | ShortTensor',
+       help='image of 1, 3, or 4 channels HxWxCh', req=true}   
+   )
+      
+   return image.libopencv.save(filename, image)
+end
+
 
 function opencv.toCV(...)
    local _, image = dok.unpack({...}, 'opencv.display',

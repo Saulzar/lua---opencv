@@ -215,6 +215,19 @@ static int libopencv_(cvDisplay)(lua_State* L) {
   return 0;
 }
 
+static int libopencv_(cvSave)(lua_State* L) {
+  try {
+    const char* fileName     = lua_tostring(L, 1);
+    THTensor *tensor    = libopencv_(checkTensor)(L, 2);
+
+    cv::Mat image = libopencv_(ToMat)(tensor);
+    cv::imwrite(fileName, image);
+  } catch (std::exception const &e) {
+    luaL_error(L, e.what());
+  }
+  
+  return 0;
+}
 
 
 
@@ -230,6 +243,7 @@ static const luaL_reg libopencv_(Main__) [] =
   {"wrapC",                libopencv_(wrapC)},
   {"clampC",               libopencv_(clampC)},
   {"convertColor",         libopencv_(cvConvertColor)},
+  {"save",                 libopencv_(cvSave)},
   {NULL, NULL}  /* sentinel */
 };
 
