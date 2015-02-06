@@ -51,10 +51,12 @@ function opencv.resize(...)
    )
    
    assert(libopencv.inter[quality] ~= nil, "opencv.resize: quality must be one of "..flags)   
-   assert((scale ~= 1) or (width > 0 and height > 0),  "opencv.resize: either supply scale or (width, height)")
    
-   if(scale ~= 1) then
+   if(width == 0) then
     width = image:size(2) * scale
+   end
+   
+   if(height == 0) then
     height = image:size(1) * scale
    end   
    
@@ -263,38 +265,10 @@ function opencv.convertColor(...)
        help='requested conversion, one of: '..codes, req = true}
    )
   
-  assert(libopencv.convert[code] ~= nil, "opencv.convertColor: conversion must be one of "..codes)
+  assert(libopencv.convert[code], "opencv.convertColor: conversion must be one of "..codes)
   return image.libopencv.convertColor(image, libopencv.convert[code])
 end
 
-
-function torch.clamp(...)
-
-   local _, x, min, max = dok.unpack({...}, "torch.clamp", 
-      'clamp component values in a tensor to a range [min, max)',
-      {arg='x', type='torch.*Tensor',
-       help= 'any tensor', req=true},
-      {arg='min', type='number',
-       help= 'minimum value', req=true},
-      {arg='max', type='number',
-       help= 'maximum value', req=true}
-   )
- 
-  return x.libopencv.clampC(x, min, max)
-end
-
-function torch.wrap(...)
-
-   local _, x, max = dok.unpack({...}, "torch.wrap", 
-      'wrap component values in a tensor to a range from [0, max)',
-      {arg='x', type='torch.*Tensor',
-       help= 'any tensor', req=true},
-      {arg='max', type='number',
-       help= 'maximum value', req=true}  
-   )
- 
-  return x.libopencv.wrapC(x, max)
-end
 
 
 function opencv.test()

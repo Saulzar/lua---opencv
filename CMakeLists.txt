@@ -6,6 +6,7 @@ FIND_PACKAGE(OpenCV REQUIRED)
 SET(src opencv.cpp)
 SET(luasrc init.lua lena.jpg affine.lua util.lua test.lua)
 
+
 SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
 
 ADD_TORCH_PACKAGE(opencv "${src}" "${luasrc}" "Image Processing")

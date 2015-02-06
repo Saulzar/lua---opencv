@@ -27,7 +27,7 @@ static int libopencv_(cvDepth)() {
     return CV_8S;
   #elif defined(TH_REAL_IS_SHORT)    
     return CV_16U;
-  #elif defined(TH_REAL_IS_LONG)        
+  #elif defined(TH_REAL_IS_INT)        
     return CV_32S;
   #elif defined(TH_REAL_IS_FLOAT)        
     return CV_32F;
@@ -35,7 +35,7 @@ static int libopencv_(cvDepth)() {
     return CV_64F;
   #endif
       
-  cvAssert (false, "cvDepth: unknown type");
+  cvAssert (false, "cvDepth: unsupported type");
 }
 
 
@@ -69,7 +69,6 @@ inline THTensor *libopencv_(ToTensor)(cv::Mat const &m) {
   TH_TENSOR_APPLY(real, tensor, *tensor_data = *mat_data++; );
   return tensor;
 }
-
 
 
 
@@ -122,7 +121,7 @@ static int libopencv_(cvWarpAffine) (lua_State *L) {
     cv::Mat dest;
    
     int flags = (fill ? CV_WARP_FILL_OUTLIERS : 0) | quality;   
-    cv::warpAffine(source, dest, warp, cv::Size(w, h), flags);
+    cv::warpAffine(source, dest, warp, cv::Size(w, h), flags, cv::BORDER_CONSTANT, cv::Scalar(200,200,200));
     
     
     luaT_pushudata(L, libopencv_(ToTensor)(dest), torch_Tensor);
@@ -156,43 +155,6 @@ static int libopencv_(cvConvertColor) (lua_State *L) {
 }
 
 
-
-static int libopencv_(clampC) (lua_State *L) {
-  try {
-  
-    THTensor *tensor = libopencv_(checkTensor)(L, 1);
-    
-    real min = lua_tonumber(L, 2);
-    real max = lua_tonumber(L, 3);
-
-    TH_TENSOR_APPLY(real, tensor, *tensor_data = clamp(*tensor_data, min, max); );
-    
-    libopencv_(push)(L, tensor);
-    return 1;    
-    
-  } catch (std::exception const &e) {
-    luaL_error(L, e.what());
-  }    
-}
-
-
-
-
-static int libopencv_(wrapC) (lua_State *L) {
-  try {
-  
-    THTensor *tensor = libopencv_(checkTensor)(L, 1);
-    
-    real r = lua_tonumber(L, 2);
-    TH_TENSOR_APPLY(real, tensor, *tensor_data = wrap(*tensor_data, r); );
-    
-    libopencv_(push)(L, tensor);
-    return 1;       
-    
-  } catch (std::exception const &e) {
-    luaL_error(L, e.what());
-  }    
-}
 
 
 
@@ -240,8 +202,6 @@ static const luaL_reg libopencv_(Main__) [] =
   {"warpAffine",           libopencv_(cvWarpAffine)},
   {"resize",               libopencv_(cvResize)},
   {"display",              libopencv_(cvDisplay)},
-  {"wrapC",                libopencv_(wrapC)},
-  {"clampC",               libopencv_(clampC)},
   {"convertColor",         libopencv_(cvConvertColor)},
   {"save",                 libopencv_(cvSave)},
   {NULL, NULL}  /* sentinel */
@@ -250,12 +210,12 @@ static const luaL_reg libopencv_(Main__) [] =
 
 extern "C" {
 
-DLL_EXPORT int libopencv_(Main_init) (lua_State *L) {
-  luaT_pushmetatable(L, torch_Tensor);
-  luaT_registeratname(L, libopencv_(Main__), "libopencv");
-  lua_pop(L,1); 
-  return 1;
-}
+  DLL_EXPORT int libopencv_(Main_init) (lua_State *L) {
+    luaT_pushmetatable(L, torch_Tensor);
+    luaT_registeratname(L, libopencv_(Main__), "libopencv");
+    lua_pop(L,1); 
+    return 1;
+  }
 
 }
 #endif

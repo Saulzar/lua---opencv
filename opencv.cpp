@@ -3,10 +3,6 @@
 #include <opencv/cv.h>
 
 
-
-
-
-
 inline void cvAssert (bool condition, const char *message) {
  
   if(!condition)
@@ -62,7 +58,7 @@ inline int pushAsTensor(lua_State* L, cv::Mat const &m) {
       luaT_pushudata(L, libopencv_ShortToTensor(m), "torch.ShortTensor");    
     break;
     case CV_32S:  
-      luaT_pushudata(L, libopencv_LongToTensor(m), "torch.LongTensor");
+      luaT_pushudata(L, libopencv_IntToTensor(m), "torch.IntTensor");
     break;
     case CV_32F:  
       luaT_pushudata(L, libopencv_FloatToTensor(m), "torch.FloatTensor");
@@ -105,7 +101,10 @@ std::map<std::string, int> convertFlags = {
   {"hls2bgr", cv::COLOR_HLS2BGR},
   
   {"bgr2lab", cv::COLOR_BGR2Lab},
-  {"lab2bgr", cv::COLOR_Lab2BGR}
+  {"lab2bgr", cv::COLOR_Lab2BGR},
+  
+  {"bgr2yuv", cv::COLOR_BGR2YCrCb},
+  {"yuv2bgr", cv::COLOR_YCrCb2BGR}
 };
     
 
@@ -151,6 +150,9 @@ static int loadImage(lua_State* L) {
   return 1;
 }
 
+
+
+
 //============================================================
 // Register functions in LUA
 //
@@ -163,22 +165,23 @@ static const luaL_reg libopencv_init [] =
 
 extern "C" {
 
-DLL_EXPORT int luaopen_libopencv(lua_State *L)
-{
+  DLL_EXPORT int luaopen_libopencv(lua_State *L)
+  {
 
-  luaL_register(L, "libopencv", libopencv_init);
+    luaL_register(L, "libopencv", libopencv_init);
 
-  libopencv_ByteMain_init(L);
-  libopencv_CharMain_init(L);
-  libopencv_LongMain_init(L);
-  libopencv_FloatMain_init(L);
-  libopencv_DoubleMain_init(L);
-  
-  setField(L, "libopencv", "inter", interFlags);
-  setField(L, "libopencv", "convert", convertFlags);
+    libopencv_ByteMain_init(L);
+    libopencv_CharMain_init(L);
+    libopencv_IntMain_init(L);
+    libopencv_LongMain_init(L);
+    libopencv_FloatMain_init(L);
+    libopencv_DoubleMain_init(L);
+    
+    setField(L, "libopencv", "inter", interFlags);
+    setField(L, "libopencv", "convert", convertFlags);
 
 
-  return 1;
-}
+    return 1;
+  }
 
 }
