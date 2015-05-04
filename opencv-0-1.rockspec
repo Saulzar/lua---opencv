@@ -2,14 +2,14 @@ package = "opencv"
 version = "0-1"
 
 source = {
-   url = "git://github.com/torch/nn.git",
+   url = "https://github.com/Saulzar/lua---opencv.git",
 }
 
 description = {
    summary = "OpenCV bindings for Torch",
    detailed = [[
    ]],
-   homepage = "https://github.com/torch/nn",
+   homepage = "https://github.com/Saulzar/lua---opencv",
    license = "BSD"
 }
 
