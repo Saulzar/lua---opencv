@@ -142,15 +142,38 @@ void setField(lua_State* L, std::string const &table, K const &key,  V const &va
 
 
 static int loadImage(lua_State* L) {
-  const char* fileName     = lua_tostring(L, 1);
-  
-  cv::Mat m = cv::imread(fileName, CV_LOAD_IMAGE_UNCHANGED); 
-  pushAsTensor(L, m);
+  try {
 
-  return 1;
+    const char* fileName     = lua_tostring(L, 1);
+    
+    cv::Mat m = cv::imread(fileName, CV_LOAD_IMAGE_UNCHANGED); 
+    pushAsTensor(L, m);
+
+    return 1;
+  } catch (std::exception const &e) {
+    luaL_error(L, e.what());
+  }       
 }
 
 
+static int distanceTransform(lua_State* L) {
+  try {
+    // Get Tensor's Info
+    THByteTensor * mask_tensor = (THByteTensor *)luaT_checkudata(L, 1, "torch.ByteTensor");
+    
+    cv::Mat mask = libopencv_ByteToMat(mask_tensor);
+    cv::Mat dest;
+      
+    cv::distanceTransform(mask, dest, CV_DIST_L2, 5);
+        
+    pushAsTensor(L, dest);
+    return 1;    
+    
+  } catch (std::exception const &e) {
+    luaL_error(L, e.what());
+  }    
+ 
+}
 
 
 //============================================================
@@ -159,6 +182,7 @@ static int loadImage(lua_State* L) {
 static const luaL_reg libopencv_init [] =
 {  
   {"load",   loadImage},
+  {"distanceTransform",   distanceTransform},
   {NULL,NULL}
 };
 

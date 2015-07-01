@@ -6,7 +6,7 @@ require 'dok'
 
 
 -- load C lib
-require 'libopencv'
+local libopencv = require 'libopencv'
 
 opencv = { }
 
@@ -27,7 +27,7 @@ local function showFlags (t)
 end
 
 
--- WarpAffine
+
 function opencv.resize(...)
   
    local flags = showFlags(libopencv.inter)
@@ -59,14 +59,79 @@ function opencv.resize(...)
    if(height == 0) then
     height = image:size(1) * scale
    end   
-   
+
+   assert(image.libopencv, "opencv.resize: unsupported opencv data type")
    assert(image:isContiguous(), "opencv.resize: image must be contiguous")   
    return image.libopencv.resize(image, width, height, libopencv.inter[quality])
 end
 
 
+function opencv.inpaint(...)
+  
+   local _, image, mask, radius  = dok.unpack(
+      {...},
+      'opencv.inpaint',
+      [[Inpaint missing pixels of an image.]],
+      {arg='image', type='torch.ByteTensor',
+       help='image to inpaint', req=true},
 
--- WarpAffine
+      {arg='mask', type='torch.ByteTensor',
+       help='mask image of missing pixels', req=true},
+ 
+      {arg='radius', type='number',
+       help='neighborhood radius considered when inpainting a pixel', req=true}
+        
+   )
+   
+   assert(torch.type(image) == 'torch.ByteTensor', "OpenCV only supports inpaint for 8 bit")
+   assert(image.libopencv, "opencv.inpaint: unsupported opencv data type")
+   assert(image:isContiguous(), "opencv.inpaint: image must be contiguous")   
+   
+   return image.libopencv.inpaint(image, mask, radius)
+end
+
+
+
+function opencv.distanceTransform(...)
+  
+   local _, image  = dok.unpack(
+      {...},
+      'opencv.distanceTransform',
+      [[Distance transform function.]],
+
+      {arg='image', type='torch.ByteTensor',
+       help='mask of pixels to compute distance from', req=true}
+   )
+   
+  
+   assert(torch.type(image) == 'torch.ByteTensor', "OpenCV only supports distanceTransform for 8 bit")
+   assert(image:isContiguous(), "opencv.distanceTransform: image must be contiguous")   
+   
+   return libopencv.distanceTransform(image)
+end
+
+
+function opencv.medianBlur(...)
+  
+   local _, image, kernel  = dok.unpack(
+      {...},
+      'opencv.medianBlur',
+      [[Apply a median filter across an image.]],
+      {arg='image', type='torch.*Tensor',
+       help='image to inpaint', req=true},
+ 
+      {arg='kernel', type='number',
+       help='kernel dimensions', req=true}
+        
+   )
+   
+   assert(image.libopencv, "opencv.resize: unsupported opencv data type")
+   assert(image:isContiguous(), "opencv.resize: image must be contiguous")   
+   
+   return image.libopencv.medianBlur(image, kernel)
+end
+
+
 function opencv.batchResize(...)
   
    local flags = showFlags(libopencv.inter)
@@ -88,6 +153,7 @@ function opencv.batchResize(...)
        help='height of resized image', default=1}
    )
 
+   assert(image.libopencv, "opencv.resize: unsupported opencv data type")
    assert(libopencv.inter[quality] ~= nil, "opencv.batchResize: quality must be one of "..flags)   
    assert((scale ~= 1) or (height > 0 and width > 0),  "opencv.batchResize: either supply scale or (width, height)")
         
@@ -156,7 +222,7 @@ function opencv.warpAffine(...)
        help='fill the areas outside source image?', default=false}       
    )
    
-  
+   assert(image.libopencv, "opencv.resize: unsupported opencv data type")
    assert(libopencv.inter[quality] ~= nil, 'opencv.warpAffine quality must be one of '..flags)    
    assert(warp:size(1) == 2 or warp:size(1) == 3 and warp:size(2) == 3, "opencv.warpAffine warp Tensor must be 2x3 or 3x3")
   

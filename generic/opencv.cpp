@@ -98,6 +98,53 @@ static int libopencv_(cvResize) (lua_State *L) {
   
 }
 
+ 
+ 
+ 
+ 
+static int libopencv_(cvInpaint) (lua_State *L) {
+  
+  try {
+    // Get Tensor's Info
+    THTensor * source_tensor = libopencv_(checkTensor)(L, 1);
+    THByteTensor * mask_tensor = (THByteTensor *)luaT_checkudata(L, 2, "torch.ByteTensor");
+
+    int radius = lua_tonumber(L, 3);
+    
+    cv::Mat source = libopencv_(ToMat)(source_tensor);
+    cv::Mat mask = libopencv_ByteToMat(mask_tensor);
+    cv::Mat dest;
+      
+    cv::inpaint(source, mask, dest, radius, 0/*, cv::INPAINT_TELEA*/);
+
+    luaT_pushudata(L, libopencv_(ToTensor)(dest), torch_Tensor);
+    return 1;    
+    
+  } catch (std::exception const &e) {
+    luaL_error(L, e.what());
+  }    
+}
+
+
+static int libopencv_(cvMedianBlur) (lua_State *L) {
+  
+  try {
+    // Get Tensor's Info
+    THTensor * source_tensor = libopencv_(checkTensor)(L, 1);
+    int kernelSize = lua_tonumber(L, 2);
+    
+    cv::Mat source = libopencv_(ToMat)(source_tensor);
+    cv::Mat dest;
+      
+    cv::medianBlur(source, dest, kernelSize);
+
+    luaT_pushudata(L, libopencv_(ToTensor)(dest), torch_Tensor);
+    return 1;    
+    
+  } catch (std::exception const &e) {
+    luaL_error(L, e.what());
+  }    
+}
 
 //============================================================
 static int libopencv_(cvWarpAffine) (lua_State *L) {
@@ -201,6 +248,8 @@ static const luaL_reg libopencv_(Main__) [] =
 {
   {"warpAffine",           libopencv_(cvWarpAffine)},
   {"resize",               libopencv_(cvResize)},
+  {"inpaint",              libopencv_(cvInpaint)},
+  {"medianBlur",           libopencv_(cvMedianBlur)},
   {"display",              libopencv_(cvDisplay)},
   {"convertColor",         libopencv_(cvConvertColor)},
   {"save",                 libopencv_(cvSave)},
